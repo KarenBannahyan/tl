@@ -12,6 +12,26 @@
 <p>Кнопка:</p>
 <button id="translateBtn">Перевести</button>
 
+<p>Выберите направление перевода:</p>
+
+<!-- Галочки (радиокнопки, чтобы можно было выбрать только одно направление) -->
+<div>
+    <input type="radio" name="direction" id="fr_en" value="fr|en">
+    <label for="fr_en">Французский → Английский</label>
+</div>
+<div>
+    <input type="radio" name="direction" id="fr_ru" value="fr|ru">
+    <label for="fr_ru">Французский → Русский</label>
+</div>
+<div>
+    <input type="radio" name="direction" id="ru_fr" value="ru|fr">
+    <label for="ru_fr">Русский → Французский</label>
+</div>
+<div>
+    <input type="radio" name="direction" id="en_fr" value="en|fr" checked>
+    <label for="en_fr">Английский → Французский</label>
+</div>
+
 <p>Перевод:</p>
 <div id="frenchTranslation">—</div>
 
@@ -20,8 +40,9 @@
     var input = document.getElementById('englishWord');
     var button = document.getElementById('translateBtn');
     var output = document.getElementById('frenchTranslation');
+    var radioButtons = document.querySelectorAll('input[name="direction"]');
 
-    // Функция перевода (старый способ, без fetch, без async/await)
+    // Функция перевода (работает на старых телефонах)
     function translateWord() {
         var word = input.value.trim();
         
@@ -30,30 +51,54 @@
             return;
         }
         
+        // Получаем выбранное направление
+        var direction = "";
+        for (var i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].checked) {
+                direction = radioButtons[i].value;
+                break;
+            }
+        }
+        
+        // Разделяем на исходный язык и целевой
+        var languages = direction.split("|");
+        var fromLang = languages[0];
+        var toLang = languages[1];
+        
         // Показываем загрузку
         output.innerHTML = "Загрузка...";
         
-        // Создаём старый добрый XMLHttpRequest (работает везде)
+        // Создаём XMLHttpRequest (работает везде, даже на старых телефонах)
         var xhr = new XMLHttpRequest();
         
-        // Google Translate API (тот же самый)
-        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=" + encodeURIComponent(word);
+        // Google Translate API
+        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
         
         xhr.open("GET", url, true);
         
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) { // Запрос завершён
+            if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
                     try {
-                        // Парсим JSON (старый способ)
                         var data = JSON.parse(xhr.responseText);
                         
-                        // Получаем перевод
+                        // Получаем перевод (разные варианты структуры ответа)
+                        var translation = "";
                         if (data && data[0] && data[0][0] && data[0][0][0]) {
-                            var translation = data[0][0][0];
-                            output.innerHTML = translation;
+                            translation = data[0][0][0];
+                        } else if (data && data[0] && typeof data[0][0] === "string") {
+                            translation = data[0][0];
+                        } else if (data && data[0] && data[0][0] && data[0][0][0] === undefined) {
+                            translation = data[0][0];
                         } else {
-                            output.innerHTML = "Перевод не найден";
+                            translation = "Перевод не найден";
+                        }
+                        
+                        // Если перевод совпадает с оригиналом
+                        if (translation.toLowerCase() === word.toLowerCase()) {
+                            output.innerHTML = "Перевод не найден (совпадает с оригиналом)";
+                        } else {
+                            output.innerHTML = translation;
                         }
                     } catch(e) {
                         output.innerHTML = "Ошибка разбора ответа";
