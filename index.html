@@ -6,82 +6,80 @@
 </head>
 <body>
 
-<!-- ВСЁ МАКСИМАЛЬНО ЛЕВО -->
-<p style="margin: 0;">Введите слово:</p>
-<input type="text" id="englishWord" style="margin: 0;">
+<p>Введите слово:</p>
+<input type="text" id="englishWord" style="width: 200px;">
 
-<p style="margin: 10px 0 0 0;">Кнопка:</p>
+<p>Кнопка:</p>
 <button id="translateBtn">Перевести</button>
 
-<p style="margin: 10px 0 0 0;">Перевод:</p>
+<p>Перевод:</p>
 <div id="frenchTranslation">—</div>
 
 <script>
-    // =============== Элементы ===============
-    const input = document.getElementById('englishWord');
-    const translateBtn = document.getElementById('translateBtn');
-    const outputDiv = document.getElementById('frenchTranslation');
+    // Получаем элементы
+    var input = document.getElementById('englishWord');
+    var button = document.getElementById('translateBtn');
+    var output = document.getElementById('frenchTranslation');
 
-    const FROM_LANG = 'en';
-    const TO_LANG = 'fr';
-
-    // Тот же принцип парсинга Google Translate API
-    async function translateEnglishToFrench(word) {
-        const cleanWord = word.trim();
+    // Функция перевода (старый способ, без fetch, без async/await)
+    function translateWord() {
+        var word = input.value.trim();
         
-        if (cleanWord === "") {
-            throw new Error("Введите слово");
-        }
-
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${FROM_LANG}&tl=${TO_LANG}&dt=t&q=${encodeURIComponent(cleanWord)}`;
-        
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`Ошибка: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data && Array.isArray(data) && data[0] && Array.isArray(data[0])) {
-            let translation = data[0].map(segment => segment[0]).join('');
-            
-            if (!translation || translation.toLowerCase() === cleanWord.toLowerCase()) {
-                throw new Error("Перевод не найден");
-            }
-            
-            return translation;
-        } else {
-            throw new Error("Ошибка парсинга");
-        }
-    }
-
-    async function handleTranslation() {
-        const word = input.value;
-        
-        if (!word.trim()) {
-            outputDiv.textContent = "❌ Введите слово";
+        if (word === "") {
+            output.innerHTML = "Введите слово";
             return;
         }
         
-        outputDiv.textContent = "⏳...";
+        // Показываем загрузку
+        output.innerHTML = "Загрузка...";
         
-        try {
-            const translation = await translateEnglishToFrench(word);
-            outputDiv.textContent = translation;
-        } catch (error) {
-            outputDiv.textContent = "❌ " + error.message;
-        }
+        // Создаём старый добрый XMLHttpRequest (работает везде)
+        var xhr = new XMLHttpRequest();
+        
+        // Google Translate API (тот же самый)
+        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=" + encodeURIComponent(word);
+        
+        xhr.open("GET", url, true);
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) { // Запрос завершён
+                if (xhr.status === 200) {
+                    try {
+                        // Парсим JSON (старый способ)
+                        var data = JSON.parse(xhr.responseText);
+                        
+                        // Получаем перевод
+                        if (data && data[0] && data[0][0] && data[0][0][0]) {
+                            var translation = data[0][0][0];
+                            output.innerHTML = translation;
+                        } else {
+                            output.innerHTML = "Перевод не найден";
+                        }
+                    } catch(e) {
+                        output.innerHTML = "Ошибка разбора ответа";
+                    }
+                } else {
+                    output.innerHTML = "Ошибка: " + xhr.status;
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            output.innerHTML = "Ошибка сети. Проверьте интернет.";
+        };
+        
+        xhr.send();
     }
-
-    input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleTranslation();
+    
+    // Вешаем обработчик на кнопку
+    button.onclick = translateWord;
+    
+    // Перевод по Enter
+    input.onkeypress = function(e) {
+        if (e.keyCode === 13) {
+            translateWord();
         }
-    });
-
-    translateBtn.addEventListener('click', handleTranslation);
+    };
 </script>
 
 </body>
