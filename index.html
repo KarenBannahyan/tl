@@ -2,111 +2,87 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Переводчик англ → фр</title>
+    <title>Переводчик</title>
 </head>
 <body>
-    <!-- Левый верхний угол: поле ввода -->
-    <div style="position: fixed; top: 10px; left: 10px;">
-        <input type="text" id="englishWord" placeholder="Введите английское слово" style="padding: 8px; width: 250px;">
-        <button id="translateBtn" style="margin-left: 8px; padding: 8px 16px;">Перевести</button>
-        <button id="clearBtn" style="margin-left: 5px; padding: 8px 16px;">Очистить</button>
-    </div>
 
-    <!-- Внизу страницы будет перевод -->
-    <div style="position: fixed; bottom: 20px; left: 10px; right: 10px; font-size: 24px; font-family: monospace;">
-        <strong>Перевод:</strong> <span id="frenchTranslation">—</span>
-    </div>
+<!-- ВСЁ МАКСИМАЛЬНО ЛЕВО -->
+<p style="margin: 0;">Введите слово:</p>
+<input type="text" id="englishWord" style="margin: 0;">
 
-    <script>
-        // =============== DOM элементы ===============
-        const input = document.getElementById('englishWord');
-        const translateBtn = document.getElementById('translateBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const outputSpan = document.getElementById('frenchTranslation');
+<p style="margin: 10px 0 0 0;">Кнопка:</p>
+<button id="translateBtn">Перевести</button>
 
-        // Языки: английский → французский (код НЕ МЕНЯЕТСЯ, такой же принцип парсинга)
-        const FROM_LANG = 'en';
-        const TO_LANG = 'fr';
+<p style="margin: 10px 0 0 0;">Перевод:</p>
+<div id="frenchTranslation">—</div>
 
-        /**
-         * Функция перевода через парсинг Google Translate API
-         * ТОТ ЖЕ САМЫЙ МЕТОД, ЧТО И В ВАШЕМ ПРИМЕРЕ:
-         * - endpoint: translate.googleapis.com/translate_a/single
-         * - параметры: client=gtx, sl=en, tl=fr, dt=t, q=слово
-         * - парсинг JSON: data[0].map(...)
-         */
-        async function translateEnglishToFrench(word) {
-            const cleanWord = word.trim();
-            
-            if (cleanWord === "") {
-                throw new Error("Введите слово");
-            }
+<script>
+    // =============== Элементы ===============
+    const input = document.getElementById('englishWord');
+    const translateBtn = document.getElementById('translateBtn');
+    const outputDiv = document.getElementById('frenchTranslation');
 
-            // ТОЧНО ТАКОЙ ЖЕ ЗАПРОС, КАК В ВАШЕМ ПРИМЕРЕ
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${FROM_LANG}&tl=${TO_LANG}&dt=t&q=${encodeURIComponent(cleanWord)}`;
-            
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка сети: ${response.status}`);
-            }
-            
-            // Парсим JSON (как в вашем коде)
-            const data = await response.json();
-            
-            // Та же структура: data[0] — массив сегментов перевода
-            if (data && Array.isArray(data) && data[0] && Array.isArray(data[0])) {
-                let translation = data[0].map(segment => segment[0]).join('');
-                
-                if (!translation || translation.toLowerCase() === cleanWord.toLowerCase()) {
-                    throw new Error("Перевод не найден");
-                }
-                
-                return translation;
-            } else {
-                throw new Error("Ошибка парсинга ответа");
-            }
+    const FROM_LANG = 'en';
+    const TO_LANG = 'fr';
+
+    // Тот же принцип парсинга Google Translate API
+    async function translateEnglishToFrench(word) {
+        const cleanWord = word.trim();
+        
+        if (cleanWord === "") {
+            throw new Error("Введите слово");
         }
 
-        // Обработчик перевода
-        async function handleTranslation() {
-            const word = input.value;
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${FROM_LANG}&tl=${TO_LANG}&dt=t&q=${encodeURIComponent(cleanWord)}`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data && Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+            let translation = data[0].map(segment => segment[0]).join('');
             
-            if (!word.trim()) {
-                outputSpan.innerText = "❌ Введите слово";
-                return;
+            if (!translation || translation.toLowerCase() === cleanWord.toLowerCase()) {
+                throw new Error("Перевод не найден");
             }
             
-            // Показываем процесс
-            outputSpan.innerText = "⏳ перевод...";
-            
-            try {
-                const frenchWord = await translateEnglishToFrench(word);
-                outputSpan.innerText = frenchWord;
-            } catch (error) {
-                outputSpan.innerText = "❌ " + error.message;
-            }
+            return translation;
+        } else {
+            throw new Error("Ошибка парсинга");
         }
+    }
 
-        // Очистка
-        function handleClear() {
-            input.value = '';
-            outputSpan.innerText = "—";
-            input.focus();
+    async function handleTranslation() {
+        const word = input.value;
+        
+        if (!word.trim()) {
+            outputDiv.textContent = "❌ Введите слово";
+            return;
         }
-
-        // Enter в поле ввода
-        function onEnter(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleTranslation();
-            }
+        
+        outputDiv.textContent = "⏳...";
+        
+        try {
+            const translation = await translateEnglishToFrench(word);
+            outputDiv.textContent = translation;
+        } catch (error) {
+            outputDiv.textContent = "❌ " + error.message;
         }
+    }
 
-        // Навешиваем события
-        translateBtn.addEventListener('click', handleTranslation);
-        clearBtn.addEventListener('click', handleClear);
-        input.addEventListener('keypress', onEnter);
-    </script>
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleTranslation();
+        }
+    });
+
+    translateBtn.addEventListener('click', handleTranslation);
+</script>
+
 </body>
 </html>
