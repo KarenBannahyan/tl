@@ -2,187 +2,19 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Английский → Французский перевод</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #f5f5f5;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            max-width: 500px;
-            width: 100%;
-            padding: 30px 25px;
-            border-radius: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #1a1a2e;
-        }
-
-        .sub {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 25px;
-            border-left: 3px solid #0057b3;
-            padding-left: 12px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        #englishWord {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            outline: none;
-            transition: 0.2s;
-        }
-
-        #englishWord:focus {
-            border-color: #0057b3;
-            box-shadow: 0 0 0 2px rgba(0,87,179,0.1);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        button {
-            flex: 1;
-            padding: 12px 16px;
-            font-size: 15px;
-            font-weight: 500;
-            border: none;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        #translateBtn {
-            background: #0057b3;
-            color: white;
-        }
-
-        #translateBtn:hover {
-            background: #004099;
-        }
-
-        #clearBtn {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        #clearBtn:hover {
-            background: #ccc;
-        }
-
-        .result-box {
-            background: #f8f9fa;
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid #eee;
-        }
-
-        .result-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #888;
-            margin-bottom: 10px;
-        }
-
-        #frenchTranslation {
-            font-size: 26px;
-            font-weight: 600;
-            color: #1a1a2e;
-            word-break: break-word;
-            line-height: 1.3;
-            min-height: 70px;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #ccc;
-            border-top-color: #0057b3;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .error {
-            color: #d32f2f;
-            font-size: 14px;
-        }
-
-        .info {
-            font-size: 12px;
-            color: #888;
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-    </style>
+    <title>Переводчик англ → фр</title>
 </head>
 <body>
-    <div class="container">
-        <h1>🇬🇧 → 🇫🇷</h1>
-        <div class="sub">Введите английское слово, получите французский перевод</div>
+    <!-- Левый верхний угол: поле ввода -->
+    <div style="position: fixed; top: 10px; left: 10px;">
+        <input type="text" id="englishWord" placeholder="Введите английское слово" style="padding: 8px; width: 250px;">
+        <button id="translateBtn" style="margin-left: 8px; padding: 8px 16px;">Перевести</button>
+        <button id="clearBtn" style="margin-left: 5px; padding: 8px 16px;">Очистить</button>
+    </div>
 
-        <div class="input-group">
-            <label>📖 Английское слово</label>
-            <input type="text" id="englishWord" placeholder="Например: hello, cat, love, beautiful" autocomplete="off">
-        </div>
-
-        <div class="button-group">
-            <button id="translateBtn">Перевести</button>
-            <button id="clearBtn">Очистить</button>
-        </div>
-
-        <div class="result-box">
-            <div class="result-label">🇫🇷 Французский перевод</div>
-            <div id="frenchTranslation">—</div>
-        </div>
-        <div class="info">
-            📡 Перевод через Google Translate API (парсинг JSON)
-        </div>
+    <!-- Внизу страницы будет перевод -->
+    <div style="position: fixed; bottom: 20px; left: 10px; right: 10px; font-size: 24px; font-family: monospace;">
+        <strong>Перевод:</strong> <span id="frenchTranslation">—</span>
     </div>
 
     <script>
@@ -190,29 +22,27 @@
         const input = document.getElementById('englishWord');
         const translateBtn = document.getElementById('translateBtn');
         const clearBtn = document.getElementById('clearBtn');
-        const outputDiv = document.getElementById('frenchTranslation');
+        const outputSpan = document.getElementById('frenchTranslation');
 
-        // Языки: с английского (en) на французский (fr)
+        // Языки: английский → французский (код НЕ МЕНЯЕТСЯ, такой же принцип парсинга)
         const FROM_LANG = 'en';
         const TO_LANG = 'fr';
 
         /**
-         * Основная функция перевода через парсинг Google Translate API
-         * Принцип ТОТ ЖЕ САМЫЙ, что и в предоставленном коде:
-         * - Используется тот же endpoint: https://translate.googleapis.com/translate_a/single
-         * - Параметры: client=gtx, sl=исходный, tl=целевой, dt=t (текст перевода), q=текст
-         * - Парсинг JSON ответа: data[0] содержит массив сегментов перевода
+         * Функция перевода через парсинг Google Translate API
+         * ТОТ ЖЕ САМЫЙ МЕТОД, ЧТО И В ВАШЕМ ПРИМЕРЕ:
+         * - endpoint: translate.googleapis.com/translate_a/single
+         * - параметры: client=gtx, sl=en, tl=fr, dt=t, q=слово
+         * - парсинг JSON: data[0].map(...)
          */
         async function translateEnglishToFrench(word) {
-            // Убираем лишние пробелы
             const cleanWord = word.trim();
             
             if (cleanWord === "") {
-                throw new Error("Пожалуйста, введите слово для перевода");
+                throw new Error("Введите слово");
             }
 
-            // Тот же самый API и метод, что в вашем примере
-            // Параметры: sl=en (английский), tl=fr (французский)
+            // ТОЧНО ТАКОЙ ЖЕ ЗАПРОС, КАК В ВАШЕМ ПРИМЕРЕ
             const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${FROM_LANG}&tl=${TO_LANG}&dt=t&q=${encodeURIComponent(cleanWord)}`;
             
             const response = await fetch(url);
@@ -221,72 +51,62 @@
                 throw new Error(`Ошибка сети: ${response.status}`);
             }
             
-            // Парсим JSON ответ (точно так же, как в вашем примере)
+            // Парсим JSON (как в вашем коде)
             const data = await response.json();
             
-            // Структура ответа Google Translate:
-            // data[0] - это массив, каждый элемент содержит [перевод, исходный_язык, ...]
-            // Например: [["bonjour","hello",null,null,1]]
-            // Склеиваем все сегменты перевода в одну строку
+            // Та же структура: data[0] — массив сегментов перевода
             if (data && Array.isArray(data) && data[0] && Array.isArray(data[0])) {
-                // Проходим по всем сегментам и собираем перевод
                 let translation = data[0].map(segment => segment[0]).join('');
                 
-                // Если перевод пустой или совпадает с оригиналом (не найден)
                 if (!translation || translation.toLowerCase() === cleanWord.toLowerCase()) {
-                    throw new Error("Перевод не найден. Попробуйте другое слово.");
+                    throw new Error("Перевод не найден");
                 }
                 
                 return translation;
             } else {
-                throw new Error("Не удалось распарсить ответ от сервера");
+                throw new Error("Ошибка парсинга ответа");
             }
         }
 
-        // Функция отображения перевода с индикацией загрузки
+        // Обработчик перевода
         async function handleTranslation() {
             const word = input.value;
             
             if (!word.trim()) {
-                outputDiv.innerHTML = '<span class="error">⚠️ Введите английское слово</span>';
+                outputSpan.innerText = "❌ Введите слово";
                 return;
             }
             
-            // Показываем индикатор загрузки (как в вашем примере со стилем loading)
-            outputDiv.innerHTML = '<span>Перевод... </span><span class="loading"></span>';
+            // Показываем процесс
+            outputSpan.innerText = "⏳ перевод...";
             
             try {
                 const frenchWord = await translateEnglishToFrench(word);
-                // Успешный результат
-                outputDiv.innerHTML = frenchWord;
+                outputSpan.innerText = frenchWord;
             } catch (error) {
-                console.error("Ошибка:", error);
-                outputDiv.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+                outputSpan.innerText = "❌ " + error.message;
             }
         }
 
-        // Очистка полей
+        // Очистка
         function handleClear() {
             input.value = '';
-            outputDiv.innerHTML = '—';
+            outputSpan.innerText = "—";
             input.focus();
         }
 
-        // Перевод по нажатию Enter
-        function onEnterPress(e) {
+        // Enter в поле ввода
+        function onEnter(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 handleTranslation();
             }
         }
 
-        // Назначаем обработчики событий
+        // Навешиваем события
         translateBtn.addEventListener('click', handleTranslation);
         clearBtn.addEventListener('click', handleClear);
-        input.addEventListener('keypress', onEnterPress);
-        
-        // Небольшой пример для демонстрации при загрузке (опционально)
-        console.log("Переводчик готов. Используется парсинг Google Translate API (en → fr)");
+        input.addEventListener('keypress', onEnter);
     </script>
 </body>
 </html>
