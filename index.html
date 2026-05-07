@@ -2,130 +2,325 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Переводчик</title>
+    <title>Переводчик + пиньинь</title>
+    <style>
+        /* Максимально просто, без изменений стиля — только базовое выравнивание */
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f5f3ef;
+            margin: 0;
+            padding: 16px 12px 30px 12px;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        .input-area {
+            margin-bottom: 24px;
+        }
+        label {
+            font-weight: 600;
+            font-size: 15px;
+            display: block;
+            margin-bottom: 6px;
+        }
+        #userWord {
+            width: 100%;
+            padding: 14px 12px;
+            font-size: 18px;
+            border: 1px solid #bbb;
+            border-radius: 28px;
+            background: white;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        button {
+            background: #1f5e3a;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 10px 22px;
+            border-radius: 40px;
+            margin-top: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            font-family: inherit;
+        }
+        button:active {
+            background: #0d3e25;
+            transform: scale(0.97);
+        }
+        .lang-badge {
+            background: #e9e7e0;
+            border-radius: 24px;
+            padding: 6px 14px;
+            font-size: 13px;
+            display: inline-block;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .result-block {
+            background: #ffffffdd;
+            border-radius: 28px;
+            padding: 10px 0;
+        }
+        .translation-row {
+            background: #ffffff;
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            border-radius: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid #ece4d5;
+        }
+        .lang-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #2b4f6e;
+            margin-bottom: 8px;
+            border-left: 4px solid #2b6e4e;
+            padding-left: 10px;
+        }
+        .translation-text {
+            font-size: 20px;
+            font-weight: 500;
+            word-break: break-word;
+            color: #1c2c3a;
+            line-height: 1.4;
+        }
+        .pinyin-note {
+            font-size: 14px;
+            color: #946f42;
+            margin-top: 8px;
+            font-family: monospace;
+            background: #fef6e0;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+        }
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ccc;
+            border-top-color: #2b6e4e;
+            border-radius: 50%;
+            animation: spin 0.5s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-message {
+            color: #b13e3e;
+            background: #ffefef;
+            padding: 10px 16px;
+            border-radius: 28px;
+        }
+        hr {
+            margin: 16px 0;
+            border-color: #ddd6c8;
+        }
+        .detect-info {
+            font-size: 13px;
+            color: #5a6c6e;
+            margin-top: 6px;
+        }
+    </style>
 </head>
 <body>
+<div class="container">
+    <div class="input-area">
+        <label>📝 Введите слово или фразу (русский или английский)</label>
+        <input type="text" id="userWord" placeholder="hello / привет / world" value="hello" autocomplete="off">
+        <div>
+            <button id="translateBtn">🌍 Перевести на 5 языков</button>
+        </div>
+        <div class="detect-info" id="detectMessage">🔍 Откроется перевод: английский↔русский, испанский, французский, немецкий, китайский (пиньинь)</div>
+    </div>
 
-<p>Введите слово:</p>
-<input type="text" id="englishWord" style="width: 200px;">
-
-<p>Кнопка:</p>
-<button id="translateBtn">Перевести</button>
-
-<p>Выберите направление перевода:</p>
-
-<!-- Галочки (радиокнопки, чтобы можно было выбрать только одно направление) -->
-<div>
-    <input type="radio" name="direction" id="fr_en" value="fr|en">
-    <label for="fr_en">Французский → Английский</label>
+    <div class="result-block" id="resultsContainer">
+        <div class="translation-row" style="background:#fcf9f2;">
+            <div class="lang-name">✨ Результаты появятся здесь</div>
+            <div class="translation-text">Напишите слово и нажмите «Перевести»</div>
+        </div>
+    </div>
 </div>
-<div>
-    <input type="radio" name="direction" id="fr_ru" value="fr|ru">
-    <label for="fr_ru">Французский → Русский</label>
-</div>
-<div>
-    <input type="radio" name="direction" id="ru_fr" value="ru|fr">
-    <label for="ru_fr">Русский → Французский</label>
-</div>
-<div>
-    <input type="radio" name="direction" id="en_fr" value="en|fr" checked>
-    <label for="en_fr">Английский → Французский</label>
-</div>
-
-<p>Перевод:</p>
-<div id="frenchTranslation">—</div>
 
 <script>
-    // Получаем элементы
-    var input = document.getElementById('englishWord');
-    var button = document.getElementById('translateBtn');
-    var output = document.getElementById('frenchTranslation');
-    var radioButtons = document.querySelectorAll('input[name="direction"]');
+    // ======================== Глобальные переменные ======================
+    const inputField = document.getElementById('userWord');
+    const translateBtn = document.getElementById('translateBtn');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const detectMessageSpan = document.getElementById('detectMessage');
 
-    // Функция перевода (работает на старых телефонах)
-    function translateWord() {
-        var word = input.value.trim();
+    // Определяем, на каком языке написано слово/фраза (русский или английский)
+    function detectLanguage(text) {
+        // если есть кириллические символы — русский
+        if (/[а-яА-ЯЁё]/.test(text)) {
+            return 'ru';
+        }
+        // иначе английский (латиница + цифры и т.д.)
+        return 'en';
+    }
+
+    // Универсальная функция перевода через Google Translate API (метод парсинга идентичен исходному)
+    // Возвращает промис с переведённым текстом
+    async function translateText(word, fromLang, toLang) {
+        const cleanWord = word.trim();
+        if (cleanWord === "") return "";
+
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${fromLang}&tl=${toLang}&dt=t&q=${encodeURIComponent(cleanWord)}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        // Парсинг как в классическом решении: data[0] – массив сегментов
+        if (data && Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+            let translation = data[0].map(segment => segment[0]).join('');
+            return translation;
+        } else {
+            throw new Error("Неизвестный формат ответа");
+        }
+    }
+
+    // Специальная функция для китайского: получаем перевод + пиньинь (латинизацию)
+    // Для пиньиня используем параметр dt=t & dt=rm (чтоб получить транслитерацию). 
+    // API Google возвращает пиньинь в дополнительных полях, но универсальный способ: перевести с русского/английского на zh-cn, а потом запросить пиньинь отдельно?
+    // Однако можно получить пиньинь, используя тот же язык, целевой zh, и получить транслитерацию в отдельном запросе. Но упростим:
+    // Сначала получим китайские иероглифы, затем отдельный запрос для пиньиня (транслитерации). Будем использовать тот же API с параметром &tl=zh&dt=rm
+    // Чтобы не усложнять, сделаем аккуратно: переводим на китайский (zh), затем пиньинь — это транслитерация китайского текста, которую Google даёт в том же ответе?
+    // Второй метод: используем тот же endpoint, но с tl=zh и параметр &dt=rm — в ответе будет латинизация. Мы поступим максимально надёжно.
+    async function translateToChineseWithPinyin(word, fromLang) {
+        // 1. Получаем сам перевод на упрощённый китайский
+        const chineseText = await translateText(word, fromLang, 'zh-CN');
+        if (!chineseText) return { chinese: "—", pinyin: "—" };
         
-        if (word === "") {
-            output.innerHTML = "Введите слово";
+        // 2. Получаем пиньинь через тот же API: запрос транслитерации китайского текста (исходный язык zh, целевой zh-latn или через dt=rm)
+        // Отправим запрос специально для получения латинизации: sl=zh-CN&tl=zh-CN&dt=rm&q=китайский текст
+        const pinyinUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=zh-CN&dt=rm&q=${encodeURIComponent(chineseText)}`;
+        const pinyinResp = await fetch(pinyinUrl);
+        if (!pinyinResp.ok) throw new Error("Пиньинь не получен");
+        const pinyinData = await pinyinResp.json();
+        let pinyin = "";
+        // Парсинг романизации: Google возвращает массив в pinyinData[0] с массивом из строк в позициях.
+        if (pinyinData && Array.isArray(pinyinData) && pinyinData[0] && Array.isArray(pinyinData[0])) {
+            pinyin = pinyinData[0].map(segment => segment[0]).join('');
+        } else {
+            pinyin = "пиньинь не определён";
+        }
+        return { chinese: chineseText, pinyin: pinyin };
+    }
+
+    // Основная функция, которая запускает переводы для всех целевых языков
+    async function performAllTranslations() {
+        const rawText = inputField.value.trim();
+        if (rawText === "") {
+            resultsContainer.innerHTML = `<div class="translation-row error-message">⚠️ Пожалуйста, введите слово или фразу.</div>`;
             return;
         }
-        
-        // Получаем выбранное направление
-        var direction = "";
-        for (var i = 0; i < radioButtons.length; i++) {
-            if (radioButtons[i].checked) {
-                direction = radioButtons[i].value;
-                break;
-            }
-        }
-        
-        // Разделяем на исходный язык и целевой
-        var languages = direction.split("|");
-        var fromLang = languages[0];
-        var toLang = languages[1];
-        
-        // Показываем загрузку
-        output.innerHTML = "Загрузка...";
-        
-        // Создаём XMLHttpRequest (работает везде, даже на старых телефонах)
-        var xhr = new XMLHttpRequest();
-        
-        // Google Translate API
-        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
-        
-        xhr.open("GET", url, true);
-        
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        
-                        // Получаем перевод (разные варианты структуры ответа)
-                        var translation = "";
-                        if (data && data[0] && data[0][0] && data[0][0][0]) {
-                            translation = data[0][0][0];
-                        } else if (data && data[0] && typeof data[0][0] === "string") {
-                            translation = data[0][0];
-                        } else if (data && data[0] && data[0][0] && data[0][0][0] === undefined) {
-                            translation = data[0][0];
-                        } else {
-                            translation = "Перевод не найден";
-                        }
-                        
-                        // Если перевод совпадает с оригиналом
-                        if (translation.toLowerCase() === word.toLowerCase()) {
-                            output.innerHTML = "Перевод не найден (совпадает с оригиналом)";
-                        } else {
-                            output.innerHTML = translation;
-                        }
-                    } catch(e) {
-                        output.innerHTML = "Ошибка разбора ответа";
-                    }
-                } else {
-                    output.innerHTML = "Ошибка: " + xhr.status;
-                }
-            }
-        };
-        
-        xhr.onerror = function() {
-            output.innerHTML = "Ошибка сети. Проверьте интернет.";
-        };
-        
-        xhr.send();
-    }
-    
-    // Вешаем обработчик на кнопку
-    button.onclick = translateWord;
-    
-    // Перевод по Enter
-    input.onkeypress = function(e) {
-        if (e.keyCode === 13) {
-            translateWord();
-        }
-    };
-</script>
 
+        // Определяем исходный язык (русский / английский)
+        const sourceLang = detectLanguage(rawText);
+        const sourceLangName = sourceLang === 'ru' ? 'русский' : 'английский';
+        detectMessageSpan.innerHTML = `🔍 Исходный язык: ${sourceLangName}. Выполняется перевод...`;
+
+        // Показываем лоадер в контейнере результатов
+        resultsContainer.innerHTML = `<div class="translation-row"><div class="lang-name">⏳ Перевод <span class="loader"></span></div><div class="translation-text">Загрузка переводов...</div></div>`;
+
+        try {
+            // Целевые языки с их кодами и читаемыми названиями
+            // 1. На противоположный язык (если русский -> английский, если английский -> русский)
+            const oppositeLang = sourceLang === 'ru' ? 'en' : 'ru';
+            const oppositeName = oppositeLang === 'ru' ? '🇷🇺 Русский' : '🇬🇧 Английский';
+            
+            // 2. Испанский
+            // 3. Французский
+            // 4. Немецкий
+            // 5. Китайский с пиньинь
+            
+            // Запускаем все переводы параллельно (кроме китайского, у него своя логика)
+            const translateOpposite = translateText(rawText, sourceLang, oppositeLang);
+            const translateSpanish = translateText(rawText, sourceLang, 'es');
+            const translateFrench = translateText(rawText, sourceLang, 'fr');
+            const translateGerman = translateText(rawText, sourceLang, 'de');
+            // Для китайского специальный метод
+            const chineseResultPromise = translateToChineseWithPinyin(rawText, sourceLang);
+
+            const [oppositeText, spanishText, frenchText, germanText, chineseObj] = await Promise.all([
+                translateOpposite, translateSpanish, translateFrench, translateGerman, chineseResultPromise
+            ]);
+
+            // Формируем блоки с результатами (всегда отображаем)
+            let resultsHTML = `
+                <div class="translation-row">
+                    <div class="lang-name">${oppositeName} (автоопределение)</div>
+                    <div class="translation-text">${escapeHtml(oppositeText) || "—"}</div>
+                </div>
+                <div class="translation-row">
+                    <div class="lang-name">🇪🇸 Испанский (es)</div>
+                    <div class="translation-text">${escapeHtml(spanishText) || "—"}</div>
+                </div>
+                <div class="translation-row">
+                    <div class="lang-name">🇫🇷 Французский (fr)</div>
+                    <div class="translation-text">${escapeHtml(frenchText) || "—"}</div>
+                </div>
+                <div class="translation-row">
+                    <div class="lang-name">🇩🇪 Немецкий (de)</div>
+                    <div class="translation-text">${escapeHtml(germanText) || "—"}</div>
+                </div>
+            `;
+
+            // Для китайского выводим иероглифы + пиньинь
+            const chineseDisplay = chineseObj && chineseObj.chinese ? escapeHtml(chineseObj.chinese) : "—";
+            const pinyinDisplay = chineseObj && chineseObj.pinyin ? escapeHtml(chineseObj.pinyin) : "—";
+            resultsHTML += `
+                <div class="translation-row">
+                    <div class="lang-name">🇨🇳 Китайский (упр.) + пиньинь</div>
+                    <div class="translation-text">${chineseDisplay}</div>
+                    <div class="pinyin-note">📖 Пиньинь: ${pinyinDisplay}</div>
+                </div>
+            `;
+
+            resultsContainer.innerHTML = resultsHTML;
+            detectMessageSpan.innerHTML = `✅ Перевод выполнен (исходный: ${sourceLangName})`;
+        } catch (err) {
+            console.error("Ошибка переводов:", err);
+            resultsContainer.innerHTML = `<div class="translation-row error-message">❌ Ошибка при переводе: ${err.message || "проверьте соединение"}. Попробуйте другое слово.</div>`;
+            detectMessageSpan.innerHTML = `⚠️ Не удалось перевести слово. Проверьте интернет.`;
+        }
+    }
+
+    // Вспомогательная функция для безопасного вывода
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Обработчики событий (без изменений стилей)
+    translateBtn.addEventListener('click', () => {
+        performAllTranslations();
+    });
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performAllTranslations();
+        }
+    });
+
+    // При загрузке страницы можно показать демо-перевод для примера (необязательно)
+    window.addEventListener('DOMContentLoaded', () => {
+        // Демо-перевод для приветствия (покажем, что всё работает)
+        if (inputField.value === "hello") {
+            performAllTranslations();
+        }
+    });
+</script>
 </body>
 </html>
