@@ -22,6 +22,9 @@
 <p>Французский:</p>
 <div id="transFr">—</div>
 
+<p>Италянский:</p>
+<div id="transIt">—</div>
+
 <p>Немецкий:</p>
 <div id="transDe">—</div>
 
@@ -40,6 +43,7 @@ var outEs = document.getElementById('transEs');
 var outFr = document.getElementById('transFr');
 var outDe = document.getElementById('transDe');
 var outZh = document.getElementById('transZh');
+var outIt = document.getElementById('transIt');
 
 // Определение языка (русский или английский)
 function detectLang(text) {
@@ -118,6 +122,7 @@ function translateAll() {
         outFr.innerHTML = "—";
         outDe.innerHTML = "—";
         outZh.innerHTML = "—";
+        outIt.innerHTML = "—";
         return;
     }
     
@@ -130,6 +135,8 @@ function translateAll() {
     outFr.innerHTML = "Загрузка...";
     outDe.innerHTML = "Загрузка...";
     outZh.innerHTML = "Загрузка...";
+    outIt.innerHTML = "Загрузка...";
+
     
     // 1. Английский ↔ Русский
     translateWord(word, sourceLang, targetLang, function(res) {
@@ -146,6 +153,10 @@ function translateAll() {
         outFr.innerHTML = res;
     });
     
+    translateWord(word, sourceLang, 'it', function(res) {
+        outIt.innerHTML = res;
+    });
+    
     // 4. Немецкий
     translateWord(word, sourceLang, 'de', function(res) {
         outDe.innerHTML = res;
@@ -155,6 +166,7 @@ function translateAll() {
     translateToPinyin(word, sourceLang, function(res) {
         outZh.innerHTML = res;
     });
+
 }
 
 // Вешаем обработчики
