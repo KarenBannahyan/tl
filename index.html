@@ -13,14 +13,33 @@
 <p>Кнопка:</p>
 <button id="translateBtn">Перевести</button>
 
-<p>Перевод:</p>
+<p>Перевод (англ/рус):</p>
 <div id="frenchTranslation">—</div>
+
+<p>🇪🇸 Испанский:</p>
+<div id="spanishTranslation">—</div>
+
+<p>🇫🇷 Французский:</p>
+<div id="frenchTranslation2">—</div>
+
+<p>🇩🇪 Немецкий:</p>
+<div id="germanTranslation">—</div>
+
+<p>🇨🇳 Китайский:</p>
+<div id="chineseTranslation">—</div>
+<p style="font-size:12px; margin-top:-8px;" id="pinyinTranslation">(пиньинь: —)</p>
 
 <script>
     // =============== Элементы ===============
     var input = document.getElementById('englishWord');
     var button = document.getElementById('translateBtn');
-    var output = document.getElementById('frenchTranslation');
+    
+    var outputEnRu = document.getElementById('frenchTranslation');
+    var outputSpanish = document.getElementById('spanishTranslation');
+    var outputFrench = document.getElementById('frenchTranslation2');
+    var outputGerman = document.getElementById('germanTranslation');
+    var outputChinese = document.getElementById('chineseTranslation');
+    var outputPinyin = document.getElementById('pinyinTranslation');
 
     // Функция определения языка (русский или английский)
     function detectLanguage(text) {
@@ -31,24 +50,9 @@
     }
 
     // Функция перевода через Google Translate API (тот же метод парсинга)
-    function translateWord() {
-        var word = input.value.trim();
-        
-        if (word === "") {
-            output.innerHTML = "Введите слово";
-            return;
-        }
-        
-        // Определяем исходный язык
-        var sourceLang = detectLanguage(word);
-        // Целевой язык: если исходный русский → английский, если английский → русский
-        var targetLang = (sourceLang === 'ru') ? 'en' : 'ru';
-        
-        // Показываем загрузку
-        output.innerHTML = "Загрузка...";
-        
+    function translateText(word, fromLang, toLang, callback) {
         var xhr = new XMLHttpRequest();
-        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodeURIComponent(word);
+        var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
         
         xhr.open("GET", url, true);
         
@@ -63,34 +67,128 @@
                         } else if (data && data[0] && typeof data[0][0] === "string") {
                             translation = data[0][0];
                         } else {
-                            translation = "Перевод не найден";
+                            translation = "—";
                         }
-                        
-                        if (translation.toLowerCase() === word.toLowerCase()) {
-                            output.innerHTML = "Перевод не найден";
-                        } else {
-                            output.innerHTML = translation;
-                        }
+                        callback(translation);
                     } catch(e) {
-                        output.innerHTML = "Ошибка разбора";
+                        callback("Ошибка");
                     }
                 } else {
-                    output.innerHTML = "Ошибка: " + xhr.status;
+                    callback("Ошибка " + xhr.status);
                 }
             }
         };
         
         xhr.onerror = function() {
-            output.innerHTML = "Ошибка сети";
+            callback("Ошибка сети");
         };
         
         xhr.send();
     }
+
+    // Функция для китайского с пиньинем
+    function translateChineseWithPinyin(word, fromLang, callbackChinese, callbackPinyin) {
+        // Сначала переводим на китайский
+        translateText(word, fromLang, 'zh-CN', function(chineseText) {
+            callbackChinese(chineseText);
+            
+            // Теперь получаем пиньинь (транслитерацию китайского текста)
+            if (chineseText && chineseText !== "—" && chineseText !== "Ошибка") {
+                var xhr = new XMLHttpRequest();
+                var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=zh-CN&dt=rm&q=" + encodeURIComponent(chineseText);
+                
+                xhr.open("GET", url, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            var pinyin = "";
+                            if (data && data[0] && data[0][0] && data[0][0][0]) {
+                                pinyin = data[0][0][0];
+                            } else if (data && data[0] && typeof data[0][0] === "string") {
+                                pinyin = data[0][0];
+                            } else {
+                                pinyin = "—";
+                            }
+                            callbackPinyin(pinyin);
+                        } catch(e) {
+                            callbackPinyin("—");
+                        }
+                    } else if (xhr.readyState === 4) {
+                        callbackPinyin("—");
+                    }
+                };
+                xhr.onerror = function() { callbackPinyin("—"); };
+                xhr.send();
+            } else {
+                callbackPinyin("—");
+            }
+        });
+    }
+
+    // Главная функция перевода
+    function translateAll() {
+        var word = input.value.trim();
+        
+        if (word === "") {
+            outputEnRu.innerHTML = "Введите слово";
+            outputSpanish.innerHTML = "—";
+            outputFrench.innerHTML = "—";
+            outputGerman.innerHTML = "—";
+            outputChinese.innerHTML = "—";
+            outputPinyin.innerHTML = "(пиньинь: —)";
+            return;
+        }
+        
+        // Определяем исходный язык
+        var sourceLang = detectLanguage(word);
+        var targetLang = (sourceLang === 'ru') ? 'en' : 'ru';
+        
+        // Показываем загрузку
+        outputEnRu.innerHTML = "Загрузка...";
+        outputSpanish.innerHTML = "Загрузка...";
+        outputFrench.innerHTML = "Загрузка...";
+        outputGerman.innerHTML = "Загрузка...";
+        outputChinese.innerHTML = "Загрузка...";
+        outputPinyin.innerHTML = "(пиньинь: загрузка...)";
+        
+        // 1. Английский ↔ Русский
+        translateText(word, sourceLang, targetLang, function(result) {
+            if (result === word.toLowerCase()) {
+                outputEnRu.innerHTML = "Перевод не найден";
+            } else {
+                outputEnRu.innerHTML = result;
+            }
+        });
+        
+        // 2. Испанский
+        translateText(word, sourceLang, 'es', function(result) {
+            outputSpanish.innerHTML = result;
+        });
+        
+        // 3. Французский
+        translateText(word, sourceLang, 'fr', function(result) {
+            outputFrench.innerHTML = result;
+        });
+        
+        // 4. Немецкий
+        translateText(word, sourceLang, 'de', function(result) {
+            outputGerman.innerHTML = result;
+        });
+        
+        // 5. Китайский + пиньинь
+        translateChineseWithPinyin(word, sourceLang, function(chineseResult) {
+            outputChinese.innerHTML = chineseResult;
+        }, function(pinyinResult) {
+            outputPinyin.innerHTML = "(пиньинь: " + pinyinResult + ")";
+        });
+    }
     
-    button.onclick = translateWord;
+    // Назначаем обработчики
+    button.onclick = translateAll;
     input.onkeypress = function(e) {
         if (e.keyCode === 13) {
-            translateWord();
+            translateAll();
         }
     };
 </script>
