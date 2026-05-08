@@ -2,61 +2,37 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Переводчик с выбором языков</title>
+<title>Переводчик с пиньинем</title>
 </head>
 
 <body>
 
 <!-- ВСЁ МАКСИМАЛЬНО ЛЕВО, БЕЗ CSS, ДЛЯ СТАРОГО ТЕЛЕФОНА -->
 
-<!-- ===== НОВЫЙ БЛОК ВЫБОРА ЯЗЫКОВ (ЛЕВЫЙ ВЕРХНИЙ УГОЛ) ===== -->
-<div style="margin-bottom: 12px;">
-  <span style="font-weight: bold;">С какого:</span>
-  <select id="selectFromLang" style="width: 90px; margin-right: 12px;">
-    <option value="en">Английский</option>
-    <option value="ru">Русский</option>
-    <option value="es">Испанский</option>
-    <option value="fr">Французский</option>
-    <option value="de">Немецкий</option>
-  </select>
-
-  <span style="font-weight: bold;">На какой:</span>
-  <select id="selectToLang" style="width: 90px;">
-    <option value="ru">Русский</option>
-    <option value="en">Английский</option>
-    <option value="es">Испанский</option>
-    <option value="fr">Французский</option>
-    <option value="de">Немецкий</option>
-  </select>
-</div>
-
-<p>Введите слово или фразу:</p>
+<p>Введите слово (англ/рус):</p>
 
 <input type="text" id="inputWord" style="width: 200px;">
 
-<!-- Французские символы (остались как были) -->
+<!-- Французские символы -->
 <div style="margin-top:8px;">
-   <button onclick="addChar('à')">à</button>
-  <button onclick="addChar('â')">â</button>
-  <button onclick="addChar('ç')">ç</button>
-  <button onclick="addChar('é')">é</button>
-  <button onclick="addChar('è')">è</button>
-  <button onclick="addChar('ê')">ê</button>
-  <button onclick="addChar('ë')">ë</button>
-  <button onclick="addChar('î')">î</button>
-  <button onclick="addChar('ï')">ï</button>
-  <button onclick="addChar('ô')">ô</button>
-  <button onclick="addChar('ù')">ù</button>
-  <button onclick="addChar('û')">û</button>
-  <button onclick="addChar('ÿ')">ÿ</button>
-  <button onclick="addChar('œ')">œ</button>
+  <button type="button" onclick="addChar('é')">é</button>
+  <button type="button" onclick="addChar('è')">è</button>
+  <button type="button" onclick="addChar('ê')">ê</button>
+  <button type="button" onclick="addChar('ë')">ë</button>
+  <button type="button" onclick="addChar('à')">à</button>
+  <button type="button" onclick="addChar('â')">â</button>
+  <button type="button" onclick="addChar('ç')">ç</button>
+  <button type="button" onclick="addChar('î')">î</button>
+  <button type="button" onclick="addChar('ï')">ï</button>
+  <button type="button" onclick="addChar('ô')">ô</button>
+  <button type="button" onclick="addChar('ù')">ù</button>
+  <button type="button" onclick="addChar('û')">û</button>
 </div>
 
 <p><button id="translateBtn">Перевести</button></p>
 
-<!-- Результаты переводов: теперь отображаем пару "исходный язык → целевой" + пиньинь -->
-<p>Перевод (выбранная пара):</p>
-<div id="transMain">—</div>
+<p>Англ/Рус:</p>
+<div id="transEnRu">—</div>
 
 <p>Испанский:</p>
 <div id="transEs">—</div>
@@ -64,215 +40,164 @@
 <p>Французский:</p>
 <div id="transFr">—</div>
 
-<p>Итальянский:</p>
+<p>Италянский:</p>
 <div id="transIt">—</div>
 
 <p>Немецкий:</p>
 <div id="transDe">—</div>
 
-<p>Китайский (пиньинь, с выбранного языка):</p>
+<p>Китайский (пиньинь):</p>
 <div id="transZh">—</div>
 
-<!-- Подключаем библиотеку pinyin-pro (работает на старых телефонах) -->
+<!-- Подключаем библиотеку pinyin-pro (работает и на старых телефонах) -->
 <script src="https://unpkg.com/pinyin-pro"></script>
 
 <script>
-// ========== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ВЫБОРОМ ЯЗЫКОВ ==========
-// Получаем элементы управления
-const input = document.getElementById('inputWord');
-const btn = document.getElementById('translateBtn');
-const selectFrom = document.getElementById('selectFromLang');
-const selectTo = document.getElementById('selectToLang');
-
-// Элементы для вывода результатов
-const transMainDiv = document.getElementById('transMain');   // основной перевод по выбранной паре
-const outEs = document.getElementById('transEs');
-const outFr = document.getElementById('transFr');
-const outIt = document.getElementById('transIt');
-const outDe = document.getElementById('transDe');
-const outZh = document.getElementById('transZh');
-
-// Функция для кнопок французских символов
 function addChar(char) {
+  const input = document.getElementById("inputWord");
   input.value += char;
   input.focus();
 }
 
-// Универсальный перевод через Google Translate (XMLHttpRequest, без промисов, совместимо со старыми телефонами)
+// Элементы
+var input = document.getElementById('inputWord');
+var btn = document.getElementById('translateBtn');
+var outEnRu = document.getElementById('transEnRu');
+var outEs = document.getElementById('transEs');
+var outFr = document.getElementById('transFr');
+var outDe = document.getElementById('transDe');
+var outZh = document.getElementById('transZh');
+var outIt = document.getElementById('transIt');
+
+// Определение языка (русский или английский)
+function detectLang(text) {
+    if (/[а-яА-ЯЁё]/.test(text)) return 'ru';
+    return 'en';
+}
+
+// Универсальный перевод через Google Translate (старый XMLHttpRequest)
 function translateWord(word, fromLang, toLang, callback) {
-  if (!word || word.trim() === "") {
-    callback("—");
-    return;
-  }
-  var xhr = new XMLHttpRequest();
-  var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
-  xhr.open("GET", url, true);
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4) {
-      if (xhr.status === 200) {
-        try {
-          var data = JSON.parse(xhr.responseText);
-          var translation = "";
-          if (data && data[0] && data[0][0] && data[0][0][0]) {
-            translation = data[0][0][0];
-          } else if (data && data[0] && typeof data[0][0] === "string") {
-            translation = data[0][0];
-          } else {
-            translation = "—";
-          }
-          callback(translation);
-        } catch(e) {
-          callback("Ошибка");
+    if (!word || word.trim() === "") {
+        callback("—");
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    var translation = "";
+                    if (data && data[0] && data[0][0] && data[0][0][0]) {
+                        translation = data[0][0][0];
+                    } else if (data && data[0] && typeof data[0][0] === "string") {
+                        translation = data[0][0];
+                    } else {
+                        translation = "—";
+                    }
+                    callback(translation);
+                } catch(e) {
+                    callback("Ошибка");
+                }
+            } else {
+                callback("Ошибка " + xhr.status);
+            }
         }
-      } else {
-        callback("Ошибка " + xhr.status);
-      }
-    }
-  };
-  xhr.onerror = function() { callback("Ошибка сети"); };
-  xhr.send();
+    };
+    xhr.onerror = function() { callback("Ошибка сети"); };
+    xhr.send();
 }
 
-// Перевод в китайский пиньинь: получаем перевод исходного слова на китайский (иероглифы) -> конвертируем в пиньинь
+// Перевод в китайский пиньинь (без иероглифов)
 function translateToPinyin(word, fromLang, callback) {
-  if (!word || word.trim() === "") {
-    callback("—");
-    return;
-  }
-  // Сначала переводим слово с исходного языка (fromLang) на китайский (иероглифы)
-  translateWord(word, fromLang, 'zh-CN', function(chineseText) {
-    if (!chineseText || chineseText === "—" || chineseText === "Ошибка" || chineseText === "Ошибка сети") {
-      callback("—");
-      return;
+    if (!word || word.trim() === "") {
+        callback("—");
+        return;
     }
-    // Используем pinyin-pro для конвертации иероглифов в пиньинь
-    try {
-      if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
-        var pinyinResult = window.pinyinPro.pinyin(chineseText, { toneType: 'symbol' });
-        callback(pinyinResult || "—");
-      } else {
-        // Если библиотека не загрузилась, показываем иероглифы
-        callback(chineseText);
-      }
-    } catch(e) {
-      callback(chineseText);
-    }
-  });
+    // Сначала переводим слово на китайский (иероглифы)
+    translateWord(word, fromLang, 'zh-CN', function(chineseText) {
+        if (!chineseText || chineseText === "—" || chineseText === "Ошибка" || chineseText === "Ошибка сети") {
+            callback("—");
+            return;
+        }
+        // Используем pinyin-pro для конвертации иероглифов в пиньинь
+        try {
+            if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
+                var pinyinResult = window.pinyinPro.pinyin(chineseText, { toneType: 'symbol' });
+                callback(pinyinResult || "—");
+            } else {
+                // Если библиотека не загрузилась, показываем иероглифы
+                callback(chineseText);
+            }
+        } catch(e) {
+            callback(chineseText);
+        }
+    });
 }
 
-// ГЛАВНАЯ ФУНКЦИЯ ПЕРЕВОДА: используем выбранные пользователем языки (selectFromLang / selectToLang)
+// Главная функция перевода (все языки)
 function translateAll() {
-  var word = input.value.trim();
-  if (word === "") {
-    transMainDiv.innerHTML = "Введите слово или фразу";
-    outEs.innerHTML = "—";
-    outFr.innerHTML = "—";
-    outIt.innerHTML = "—";
-    outDe.innerHTML = "—";
-    outZh.innerHTML = "—";
-    return;
-  }
-  
-  // Получаем выбранные языки из списков (5 языков каждый)
-  var fromLang = selectFrom.value;   // например 'en', 'ru', 'es', 'fr', 'de'
-  var toLang = selectTo.value;
-  
-  // Дополнительно: для удобства показываем пользователю, какой перевод выполняется
-  // Находим читаемые названия языков
-  var langNames = {
-    'en': 'Английский', 'ru': 'Русский', 'es': 'Испанский',
-    'fr': 'Французский', 'de': 'Немецкий', 'it': 'Итальянский'
-  };
-  var fromName = langNames[fromLang] || fromLang;
-  var toName = langNames[toLang] || toLang;
-  
-  // Отображаем состояние загрузки
-  transMainDiv.innerHTML = `Загрузка (${fromName} → ${toName})...`;
-  outEs.innerHTML = "Загрузка...";
-  outFr.innerHTML = "Загрузка...";
-  outIt.innerHTML = "Загрузка...";
-  outDe.innerHTML = "Загрузка...";
-  outZh.innerHTML = "Загрузка...";
-  
-  // 1. ОСНОВНОЙ ПЕРЕВОД: по выбранной паре языков (с какого → на какой)
-  translateWord(word, fromLang, toLang, function(res) {
-    transMainDiv.innerHTML = res;
-  });
-  
-  // 2. Дополнительные языки (фиксированные, как и было изначально):
-  //    Испанский, Французский, Итальянский, Немецкий — переводим с того же исходного языка (fromLang)
-  //    Чтобы интерфейс был понятным: показываем перевод с выбранного "С какого" на испанский, французский и т.д.
-  
-  // Испанский (es) – целевой язык
-  translateWord(word, fromLang, 'es', function(res) {
-    outEs.innerHTML = res;
-  });
-  
-  // Французский
-  translateWord(word, fromLang, 'fr', function(res) {
-    outFr.innerHTML = res;
-  });
-  
-  // Итальянский
-  translateWord(word, fromLang, 'it', function(res) {
-    outIt.innerHTML = res;
-  });
-  
-  // Немецкий
-  translateWord(word, fromLang, 'de', function(res) {
-    outDe.innerHTML = res;
-  });
-  
-  // 5. Китайский (пиньинь) — переводим с выбранного исходного языка on-the-fly
-  translateToPinyin(word, fromLang, function(res) {
-    outZh.innerHTML = res;
-  });
+    var word = input.value.trim();
+    if (word === "") {
+        outEnRu.innerHTML = "Введите слово";
+        outEs.innerHTML = "—";
+        outFr.innerHTML = "—";
+        outDe.innerHTML = "—";
+        outZh.innerHTML = "—";
+        outIt.innerHTML = "—";
+        return;
+    }
+    
+    var sourceLang = detectLang(word);
+    var targetLang = (sourceLang === 'ru') ? 'en' : 'ru';
+    
+    // Показываем загрузку
+    outEnRu.innerHTML = "Загрузка...";
+    outEs.innerHTML = "Загрузка...";
+    outFr.innerHTML = "Загрузка...";
+    outDe.innerHTML = "Загрузка...";
+    outZh.innerHTML = "Загрузка...";
+    outIt.innerHTML = "Загрузка...";
+
+    
+    // 1. Английский ↔ Русский
+    translateWord(word, sourceLang, targetLang, function(res) {
+        outEnRu.innerHTML = res;
+    });
+    
+    // 2. Испанский
+    translateWord(word, sourceLang, 'es', function(res) {
+        outEs.innerHTML = res;
+    });
+    
+    // 3. Французский
+    translateWord(word, sourceLang, 'fr', function(res) {
+        outFr.innerHTML = res;
+    });
+    
+    translateWord(word, sourceLang, 'it', function(res) {
+        outIt.innerHTML = res;
+    });
+    
+    // 4. Немецкий
+    translateWord(word, sourceLang, 'de', function(res) {
+        outDe.innerHTML = res;
+    });
+    
+    // 5. Китайский (только пиньинь, без иероглифов)
+    translateToPinyin(word, sourceLang, function(res) {
+        outZh.innerHTML = res;
+    });
+
 }
 
-// ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
+// Вешаем обработчики
 btn.onclick = translateAll;
 input.onkeypress = function(e) {
-  if (e.keyCode === 13) translateAll();
+    if (e.keyCode === 13) translateAll();
 };
-
-// Чтобы пользователь мог поменять языки и сразу увидеть перевод (по желанию), добавляем прослушку изменений селектов
-selectFrom.onchange = function() {
-  // Небольшая "умная" подсказка: если исходный и целевой язык совпадают, автоматически меняем целевой на другой из доступных.
-  // Это улучшает UX, но не меняет общий дизайн.
-  if (selectFrom.value === selectTo.value) {
-    var allOptions = ['en', 'ru', 'es', 'fr', 'de'];
-    var newTo = allOptions.find(lang => lang !== selectFrom.value);
-    if (newTo) selectTo.value = newTo;
-  }
-  // Если есть введённый текст, переводим заново (для удобства)
-  if (input.value.trim() !== "") {
-    translateAll();
-  }
-};
-
-selectTo.onchange = function() {
-  // Если совпадают – меняем исходный, чтобы избежать перевода с языка на себя
-  if (selectFrom.value === selectTo.value) {
-    var allOptions = ['en', 'ru', 'es', 'fr', 'de'];
-    var newFrom = allOptions.find(lang => lang !== selectTo.value);
-    if (newFrom) selectFrom.value = newFrom;
-  }
-  if (input.value.trim() !== "") {
-    translateAll();
-  }
-};
-
-// Дополнительная инициализация: по умолчанию установим пару Английский → Русский (как в оригинальном поведении)
-// Убедимся, что совпадения нет
-if (selectFrom.value === 'en' && selectTo.value === 'ru') {
-  // уже корректно
-} else {
-  selectFrom.value = 'en';
-  selectTo.value = 'ru';
-}
-
-// Подсказка: добавим небольшой текст для ясности (ничего не ломает, дизайн не меняется)
-// Также чтобы пользователь видел, что можно выбрать любой язык из 5 для пары
 </script>
 
 </body>
