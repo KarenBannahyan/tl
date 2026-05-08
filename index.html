@@ -10,8 +10,27 @@
 <!-- ВСЁ МАКСИМАЛЬНО ЛЕВО, БЕЗ CSS, ДЛЯ СТАРОГО ТЕЛЕФОНА -->
 
 <p>Введите слово (англ/рус):</p>
+
 <input type="text" id="inputWord" style="width: 200px;">
+
+<!-- Французские символы -->
+<div style="margin-top:8px;">
+  <button type="button" onclick="addChar('é')">é</button>
+  <button type="button" onclick="addChar('è')">è</button>
+  <button type="button" onclick="addChar('ê')">ê</button>
+  <button type="button" onclick="addChar('ë')">ë</button>
+  <button type="button" onclick="addChar('à')">à</button>
+  <button type="button" onclick="addChar('â')">â</button>
+  <button type="button" onclick="addChar('ç')">ç</button>
+  <button type="button" onclick="addChar('î')">î</button>
+  <button type="button" onclick="addChar('ï')">ï</button>
+  <button type="button" onclick="addChar('ô')">ô</button>
+  <button type="button" onclick="addChar('ù')">ù</button>
+  <button type="button" onclick="addChar('û')">û</button>
+</div>
+
 <p><button id="translateBtn">Перевести</button></p>
+
 
 <p>Англ/Рус:</p>
 <div id="transEnRu">—</div>
@@ -35,6 +54,11 @@
 <script src="https://unpkg.com/pinyin-pro"></script>
 
 <script>
+function addChar(char) {
+  const input = document.getElementById("inputWord");
+  input.value += char;
+  input.focus();
+}
 // Элементы
 var input = document.getElementById('inputWord');
 var btn = document.getElementById('translateBtn');
