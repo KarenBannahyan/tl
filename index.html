@@ -7,113 +7,100 @@
 
 <body>
 
-<!-- ВСЁ МАКСИМАЛЬНО ЛЕВО, БЕЗ CSS, ДЛЯ СТАРОГО ТЕЛЕФОНА -->
+<p><b>С какого:</b></p>
+<select id="selectFromLang">
+  <option value="en">Английский</option>
+  <option value="ru">Русский</option>
+  <option value="es">Испанский</option>
+  <option value="fr">Французский</option>
+  <option value="de">Немецкий</option>
+  <option value="pt">Португальский</option>
+  <option value="ar">Арабский</option>
+  <option value="hy">Армянский</option>
+  <option value="az">Азербайджанский</option>
+</select>
 
-<!-- ===== ВЫБОР ЯЗЫКОВ (ЛЕВЫЙ ВЕРХНИЙ УГОЛ) ===== -->
-<div style="margin-bottom: 12px;">
-  <span style="font-weight: bold;">С какого:</span>
-  <select id="selectFromLang" style="width: 105px; margin-right: 12px;">
-    <option value="en">Английский</option>
-    <option value="ru">Русский</option>
-    <option value="es">Испанский</option>
-    <option value="fr">Французский</option>
-    <option value="de">Немецкий</option>
-    <option value="pt">Португальский</option>
-    <option value="ar">Арабский</option>
-    <option value="hy">Армянский</option>
-    <option value="az">Азербайджанский</option>
-  </select>
-
-  <span style="font-weight: bold;">На какой:</span>
-  <select id="selectToLang" style="width: 105px;">
-    <option value="ru">Русский</option>
-    <option value="en">Английский</option>
-    <option value="es">Испанский</option>
-    <option value="fr">Французский</option>
-    <option value="de">Немецкий</option>
-    <option value="pt">Португальский</option>
-    <option value="ar">Арабский</option>
-    <option value="hy">Армянский</option>
-    <option value="az">Азербайджанский</option>
-  </select>
-</div>
+<p><b>На какой:</b></p>
+<select id="selectToLang">
+  <option value="ru">Русский</option>
+  <option value="en">Английский</option>
+  <option value="es">Испанский</option>
+  <option value="fr">Французский</option>
+  <option value="de">Немецкий</option>
+  <option value="pt">Португальский</option>
+  <option value="ar">Арабский</option>
+  <option value="hy">Армянский</option>
+  <option value="az">Азербайджанский</option>
+</select>
 
 <p>Введите слово или фразу:</p>
 
-<input type="text" id="inputWord" style="width: 200px;">
+<input type="text" id="inputWord" style="width:200px;">
 
-<!-- Французские символы (кнопки РАБОТАЮТ, исправлено) -->
+<!-- Французские символы -->
 <div style="margin-top:8px;">
-  <button type="button" onclick="window.addChar('é')">é</button>
-  <button type="button" onclick="window.addChar('è')">è</button>
-  <button type="button" onclick="window.addChar('ê')">ê</button>
-  <button type="button" onclick="window.addChar('ë')">ë</button>
-  <button type="button" onclick="window.addChar('à')">à</button>
-  <button type="button" onclick="window.addChar('â')">â</button>
-  <button type="button" onclick="window.addChar('ç')">ç</button>
-  <button type="button" onclick="window.addChar('î')">î</button>
-  <button type="button" onclick="window.addChar('ï')">ï</button>
-  <button type="button" onclick="window.addChar('ô')">ô</button>
-  <button type="button" onclick="window.addChar('ù')">ù</button>
-  <button type="button" onclick="window.addChar('û')">û</button>
+  <button type="button" onclick="addChar('é')">é</button>
+  <button type="button" onclick="addChar('è')">è</button>
+  <button type="button" onclick="addChar('ê')">ê</button>
+  <button type="button" onclick="addChar('ë')">ë</button>
+  <button type="button" onclick="addChar('à')">à</button>
+  <button type="button" onclick="addChar('â')">â</button>
+  <button type="button" onclick="addChar('ç')">ç</button>
+  <button type="button" onclick="addChar('î')">î</button>
+  <button type="button" onclick="addChar('ï')">ï</button>
+  <button type="button" onclick="addChar('ô')">ô</button>
+  <button type="button" onclick="addChar('ù')">ù</button>
+  <button type="button" onclick="addChar('û')">û</button>
+  <button type="button" onclick="addChar('œ')">œ</button>
 </div>
 
 <p><button id="translateBtn">Перевести</button></p>
 
-<!-- Только один результат - перевод с выбранного языка на выбранный -->
-<p>Перевод:</p>
+<p><b>Перевод:</b></p>
 <div id="transResult">—</div>
 
-<!-- Китайский (пиньинь) оставляем как дополнительную полезную функцию, но не загромождаем -->
-<p>Китайский (пиньинь, с исходного языка):</p>
+<p><b>Китайский (пиньинь):</b></p>
 <div id="transZh">—</div>
 
-<!-- Подключаем библиотеку pinyin-pro (работает и на старых телефонах) -->
 <script src="https://unpkg.com/pinyin-pro"></script>
 
 <script>
-// ========== ИСПРАВЛЕННЫЕ КНОПКИ СИМВОЛОВ ==========
-// Глобальная функция addChar, чтобы кнопки её находили
-window.addChar = function(char) {
-  var inputField = document.getElementById('inputWord');
-  if (inputField) {
-    inputField.value += char;
-    inputField.focus();
-  }
-};
 
-// Элементы DOM
-var input = document.getElementById('inputWord');
-var btn = document.getElementById('translateBtn');
-var selectFrom = document.getElementById('selectFromLang');
-var selectTo = document.getElementById('selectToLang');
-var transResultDiv = document.getElementById('transResult');
-var transZhDiv = document.getElementById('transZh');
+var input, btn, selectFrom, selectTo, transResultDiv, transZhDiv;
 
-// Универсальный перевод через Google Translate (XMLHttpRequest, максимально совместимый)
+// ДОБАВЛЕНИЕ СИМВОЛОВ (старый JS)
+function addChar(ch) {
+  input.value = input.value + ch;
+  input.focus();
+}
+
+// Перевод
 function translateWord(word, fromLang, toLang, callback) {
-  if (!word || word.trim() === "") {
+
+  if (!word || word === "") {
     callback("—");
     return;
   }
+
   var xhr = new XMLHttpRequest();
-  var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
+  var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="
+    + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
+
   xhr.open("GET", url, true);
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4) {
-      if (xhr.status === 200) {
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState == 4) {
+      if (xhr.status == 200) {
         try {
           var data = JSON.parse(xhr.responseText);
-          var translation = "";
+          var t = "—";
+
           if (data && data[0] && data[0][0] && data[0][0][0]) {
-            translation = data[0][0][0];
-          } else if (data && data[0] && typeof data[0][0] === "string") {
-            translation = data[0][0];
-          } else {
-            translation = "—";
+            t = data[0][0][0];
           }
-          callback(translation);
-        } catch(e) {
+
+          callback(t);
+        } catch (e) {
           callback("Ошибка");
         }
       } else {
@@ -121,146 +108,86 @@ function translateWord(word, fromLang, toLang, callback) {
       }
     }
   };
-  xhr.onerror = function() { callback("Ошибка сети"); };
+
   xhr.send();
 }
 
-// Перевод в китайский пиньинь: переводим исходное слово на китайский (иероглифы) -> конвертируем в пиньинь
+// Китайский → пиньинь
 function translateToPinyin(word, fromLang, callback) {
-  if (!word || word.trim() === "") {
-    callback("—");
-    return;
-  }
-  // Сначала переводим слово с исходного языка (fromLang) на китайский (упрощённые иероглифы)
-  translateWord(word, fromLang, 'zh-CN', function(chineseText) {
-    if (!chineseText || chineseText === "—" || chineseText === "Ошибка" || chineseText === "Ошибка сети") {
+
+  translateWord(word, fromLang, "zh-CN", function (chineseText) {
+
+    if (!chineseText || chineseText == "—") {
       callback("—");
       return;
     }
-    // Используем pinyin-pro для конвертации иероглифов в пиньинь
+
     try {
-      if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
-        var pinyinResult = window.pinyinPro.pinyin(chineseText, { toneType: 'symbol' });
-        callback(pinyinResult || "—");
+      if (window.pinyinPro && window.pinyinPro.pinyin) {
+        var p = window.pinyinPro.pinyin(chineseText, { toneType: 'symbol' });
+        callback(p);
       } else {
-        // Если библиотека не загрузилась, показываем иероглифы как запасной вариант
         callback(chineseText);
       }
-    } catch(e) {
+    } catch (e) {
       callback(chineseText);
     }
+
   });
+
 }
 
-// Главная функция: переводим только по выбранной паре языков + пиньинь (опционально)
+// Основной перевод
 function translateMain() {
-  var word = input.value.trim();
-  if (word === "") {
-    transResultDiv.innerHTML = "Введите слово или фразу";
+
+  var word = input.value;
+
+  if (!word || word === "") {
+    transResultDiv.innerHTML = "Введите слово";
     transZhDiv.innerHTML = "—";
     return;
   }
-  
+
   var fromLang = selectFrom.value;
   var toLang = selectTo.value;
-  
-  // Для красивой подписи (чисто информативно)
-  var langNames = {
-    'en': 'Английский', 'ru': 'Русский', 'es': 'Испанский',
-    'fr': 'Французский', 'de': 'Немецкий', 'pt': 'Португальский',
-    'ar': 'Арабский', 'hy': 'Армянский', 'az': 'Азербайджанский'
-  };
-  var fromName = langNames[fromLang] || fromLang;
-  var toName = langNames[toLang] || toLang;
-  
-  // Показываем загрузку
-  transResultDiv.innerHTML = `Загрузка (${fromName} → ${toName})...`;
+
+  transResultDiv.innerHTML = "Загрузка...";
   transZhDiv.innerHTML = "Загрузка...";
-  
-  // 1. ОСНОВНОЙ ПЕРЕВОД: по выбранной паре
-  translateWord(word, fromLang, toLang, function(translatedText) {
-    // Если перевод пустой или ошибка — показываем прочерк
-    if (!translatedText || translatedText === "Ошибка" || translatedText === "Ошибка сети") {
-      transResultDiv.innerHTML = "—";
-    } else {
-      transResultDiv.innerHTML = translatedText;
-    }
+
+  translateWord(word, fromLang, toLang, function (res) {
+    transResultDiv.innerHTML = res;
   });
-  
-  // 2. Пиньинь (китайский) — переводим с того же исходного языка на китайский и транслитерируем
-  translateToPinyin(word, fromLang, function(pinyinText) {
-    transZhDiv.innerHTML = pinyinText;
+
+  translateToPinyin(word, fromLang, function (res) {
+    transZhDiv.innerHTML = res;
   });
+
 }
 
-// Обработчик нажатия кнопки и Enter
-btn.onclick = translateMain;
-input.onkeypress = function(e) {
-  if (e.keyCode === 13) translateMain();
-};
+// ИНИЦИАЛИЗАЦИЯ (ВАЖНО ДЛЯ СТАРЫХ ТЕЛЕФОНОВ)
+window.onload = function () {
 
-// Защита от выбора одинаковых языков: если пользователь выбрал одинаковые "с какого" и "на какой" — автоматом подбираем разумный целевой язык
-function avoidSameLanguages() {
-  if (selectFrom.value === selectTo.value) {
-    // Список всех доступных языков (9 языков)
-    var allLangs = ['en', 'ru', 'es', 'fr', 'de', 'pt', 'ar', 'hy', 'az'];
-    // Находим первый язык, который не равен selectFrom.value
-    var newTarget = allLangs.find(function(lang) { return lang !== selectFrom.value; });
-    if (newTarget) {
-      selectTo.value = newTarget;
-    } else {
-      // fallback (почти невозможно, но на всякий случай)
-      if (selectFrom.value === 'en') selectTo.value = 'ru';
-      else selectTo.value = 'en';
-    }
-  }
-}
+  input = document.getElementById("inputWord");
+  btn = document.getElementById("translateBtn");
+  selectFrom = document.getElementById("selectFromLang");
+  selectTo = document.getElementById("selectToLang");
+  transResultDiv = document.getElementById("transResult");
+  transZhDiv = document.getElementById("transZh");
 
-// При изменении селектов проверяем и автоматически переводим, если есть текст
-selectFrom.onchange = function() {
-  avoidSameLanguages();
-  if (input.value.trim() !== "") {
+  btn.onclick = function () {
     translateMain();
-  }
-};
-
-selectTo.onchange = function() {
-  avoidSameLanguages();
-  if (input.value.trim() !== "") {
-    translateMain();
-  }
-};
-
-// Начальная установка: "Английский -> Русский" (без дублирования)
-// чтобы сразу было понятно
-if (selectFrom.value === 'en' && selectTo.value === 'ru') {
-  // Оставляем как есть, всё корректно
-} else {
-  selectFrom.value = 'en';
-  selectTo.value = 'ru';
-}
-avoidSameLanguages(); // дополнительная синхронизация
-
-// Также если в поле есть текст по умолчанию (нет, но на всякий случай)
-if (input.value.trim() !== "") {
-  translateMain();
-}
-
-// Для максимальной совместимости со старыми телефонами явно объявляем addChar глобально
-// и дублируем её через window (уже есть выше). Также убедимся, что кнопки используют window.addChar
-// это гарантирует работу.
-if (typeof window.addChar !== 'function') {
-  window.addChar = function(ch) {
-    var inp = document.getElementById('inputWord');
-    if (inp) inp.value += ch;
-    if (inp) inp.focus();
   };
-}
+
+  input.onkeypress = function (e) {
+    e = e || window.event;
+    if (e.keyCode == 13) {
+      translateMain();
+    }
+  };
+
+};
+
 </script>
 
-<!-- Дополнительное пояснение: все лишние блоки перевода на другие языки убраны. 
-     Теперь пользователь сам выбирает С КАКОГО и НА КАКОЙ язык (доступно 9 языков).
-     Китайский пиньинь показан отдельно маленьким блоком, но не мешает.
-     Дизайн не менялся, всё максимально лево, без стилей. -->
 </body>
 </html>
