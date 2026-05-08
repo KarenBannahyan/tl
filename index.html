@@ -59,11 +59,6 @@
 <p><b>Перевод:</b></p>
 <div id="transResult">—</div>
 
-<p><b>Китайский (пиньинь):</b></p>
-<div id="transZh">—</div>
-
-<script src="https://unpkg.com/pinyin-pro"></script>
-
 <script>
 
 var input, btn, selectFrom, selectTo, transResultDiv, transZhDiv;
@@ -113,29 +108,7 @@ function translateWord(word, fromLang, toLang, callback) {
 }
 
 // Китайский → пиньинь
-function translateToPinyin(word, fromLang, callback) {
 
-  translateWord(word, fromLang, "zh-CN", function (chineseText) {
-
-    if (!chineseText || chineseText == "—") {
-      callback("—");
-      return;
-    }
-
-    try {
-      if (window.pinyinPro && window.pinyinPro.pinyin) {
-        var p = window.pinyinPro.pinyin(chineseText, { toneType: 'symbol' });
-        callback(p);
-      } else {
-        callback(chineseText);
-      }
-    } catch (e) {
-      callback(chineseText);
-    }
-
-  });
-
-}
 
 // Основной перевод
 function translateMain() {
@@ -172,7 +145,6 @@ window.onload = function () {
   selectFrom = document.getElementById("selectFromLang");
   selectTo = document.getElementById("selectToLang");
   transResultDiv = document.getElementById("transResult");
-  transZhDiv = document.getElementById("transZh");
 
   btn.onclick = function () {
     translateMain();
