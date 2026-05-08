@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Переводчик с выбором языка</title>
+<title>Переводчик</title>
 </head>
 
 <body>
@@ -61,15 +61,16 @@
 
 <script>
 
-var input, btn, selectFrom, selectTo, transResultDiv, transZhDiv;
+// глобальные переменные
+var input, btn, selectFrom, selectTo, resultBox;
 
-// ДОБАВЛЕНИЕ СИМВОЛОВ (старый JS)
+// вставка символов
 function addChar(ch) {
   input.value = input.value + ch;
   input.focus();
 }
 
-// Перевод
+// перевод через Google API
 function translateWord(word, fromLang, toLang, callback) {
 
   if (!word || word === "") {
@@ -78,8 +79,9 @@ function translateWord(word, fromLang, toLang, callback) {
   }
 
   var xhr = new XMLHttpRequest();
-  var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="
-    + fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
+  var url =
+    "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
+    fromLang + "&tl=" + toLang + "&dt=t&q=" + encodeURIComponent(word);
 
   xhr.open("GET", url, true);
 
@@ -88,13 +90,13 @@ function translateWord(word, fromLang, toLang, callback) {
       if (xhr.status == 200) {
         try {
           var data = JSON.parse(xhr.responseText);
-          var t = "—";
+          var text = "—";
 
           if (data && data[0] && data[0][0] && data[0][0][0]) {
-            t = data[0][0][0];
+            text = data[0][0][0];
           }
 
-          callback(t);
+          callback(text);
         } catch (e) {
           callback("Ошибка");
         }
@@ -107,44 +109,34 @@ function translateWord(word, fromLang, toLang, callback) {
   xhr.send();
 }
 
-// Китайский → пиньинь
-
-
-// Основной перевод
+// основной перевод
 function translateMain() {
 
   var word = input.value;
 
   if (!word || word === "") {
-    transResultDiv.innerHTML = "Введите слово";
-    transZhDiv.innerHTML = "—";
+    resultBox.innerHTML = "Введите слово";
     return;
   }
 
   var fromLang = selectFrom.value;
   var toLang = selectTo.value;
 
-  transResultDiv.innerHTML = "Загрузка...";
-  transZhDiv.innerHTML = "Загрузка...";
+  resultBox.innerHTML = "Загрузка...";
 
   translateWord(word, fromLang, toLang, function (res) {
-    transResultDiv.innerHTML = res;
+    resultBox.innerHTML = res;
   });
-
-  translateToPinyin(word, fromLang, function (res) {
-    transZhDiv.innerHTML = res;
-  });
-
 }
 
-// ИНИЦИАЛИЗАЦИЯ (ВАЖНО ДЛЯ СТАРЫХ ТЕЛЕФОНОВ)
+// запуск после загрузки страницы (ВАЖНО для старых телефонов)
 window.onload = function () {
 
   input = document.getElementById("inputWord");
   btn = document.getElementById("translateBtn");
   selectFrom = document.getElementById("selectFromLang");
   selectTo = document.getElementById("selectToLang");
-  transResultDiv = document.getElementById("transResult");
+  resultBox = document.getElementById("transResult");
 
   btn.onclick = function () {
     translateMain();
